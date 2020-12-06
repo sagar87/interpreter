@@ -2,22 +2,9 @@ from lexer import Lexer
 from tokens import TokenTypes
 from tokens import Token
 from logger import get_logger
+from ast import AST, BinOp, Num
 
 logger = get_logger("Interpreter")
-
-class AST(object):
-    pass
-
-class BinOp(object):
-    def __init__(self, left, op, right):
-        self.left = left
-        self.token = self.op = op
-        self.right = right
-
-class Num(AST):
-    def __init__(self, token):
-        self.token = token
-        self.value = token.value
 
 
 class Interpreter(object):
@@ -97,7 +84,7 @@ def main():
             continue
         interpreter = Interpreter(text)
         result = interpreter.expr()
-        print(result)
+        print(result.value)
 
 
 if __name__ == "__main__":
