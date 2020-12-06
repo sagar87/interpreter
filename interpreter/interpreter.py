@@ -5,6 +5,20 @@ from logger import get_logger
 
 logger = get_logger("Interpreter")
 
+class AST(object):
+    pass
+
+class BinOp(object):
+    def __init__(self, left, op, right):
+        self.left = left
+        self.token = self.op = op
+        self.right = right
+
+class Num(AST):
+    def __init__(self, token):
+        self.token = token
+        self.value = token.value
+
 
 class Interpreter(object):
     def __init__(self, text):
@@ -25,7 +39,7 @@ class Interpreter(object):
 
         if token.type == TokenTypes.INTEGER:
             self.eat(TokenTypes.INTEGER)
-            return token.value
+            return Num(token)
 
         if token.type == TokenTypes.LPAR:
             self.eat(TokenTypes.LPAR)
@@ -34,39 +48,42 @@ class Interpreter(object):
             return result
 
     def term(self):
-        result = self.factor()
-        logger.debug(f"Term {result}")
+        node = self.factor()
+        logger.debug(f"Term {node}")
 
-        while (token_type := self.current_token.type) in (
+        while (token := self.current_token) in (
             TokenTypes.MULTIPLY,
             TokenTypes.DIVIDE,
         ):
-            if token_type == TokenTypes.MULTIPLY:
+            if token.type == TokenTypes.MULTIPLY:
                 self.eat(TokenTypes.MULTIPLY)
-                result *= self.factor()
-            elif token_type == TokenTypes.DIVIDE:
+            elif token.type == TokenTypes.DIVIDE:
                 self.eat(TokenTypes.DIVIDE)
-                result /= self.factor()
+        
+            node = BinOp(left=node, op=token, right=self.factor())
 
-        return result
+        return node
 
     def expr(self):
-        result = self.term()
-        logger.debug(f"Expr {result}")
+        node = self.term()
+        logger.debug(f"Expr {node}")
 
-        while (token_type := self.current_token.type) in (
+        while (token := self.current_token) in (
             TokenTypes.PLUS,
             TokenTypes.MINUS,
         ):
-            if token_type == TokenTypes.PLUS:
+            if token.type == TokenTypes.PLUS:
                 self.eat(TokenTypes.PLUS)
-                result += self.term()
-            if token_type == TokenTypes.MINUS:
+            if token.type == TokenTypes.MINUS:
                 self.eat(TokenTypes.MINUS)
-                result -= self.term()
+            
+            node = BinOp(left=node, op=token, right=self.term())
+                
 
-        return result
+        return node
 
+    def parse(self):
+        return self.expr()
 
 def main():
     while True:
